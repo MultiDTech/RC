@@ -13,7 +13,7 @@ else
 echo "======================================================================"
 echo "Updating apt"
 echo "======================================================================"
-if [ -f "$/etc/apt/sources.list.d/radxa.list" ]; then
+if [ -f "/etc/apt/sources.list.d/radxa.list" ]; then
 sudo mv /etc/apt/sources.list.d/radxa.list /etc/apt/sources.list.d/radxa.list.bak
 sudo mv /etc/apt/sources.list.d/radxa-rockchip.list /etc/apt/sources.list.d/radxa-rockchip.list.bak
 fi
@@ -23,13 +23,16 @@ sudo apt update -y
 echo "======================================================================"
 echo "Inserting wifi driver"
 echo "======================================================================"
-sudo insmod ~/RC/88x2bu_ohd.ko
+if ! lsmod | grep -q "88x2bu_ohd"; then
+sudo insmod /home/radxa/RC/88x2bu_ohd.ko
+fi
 
 
 echo "======================================================================"
 echo "Loading openhd binary "
 echo "======================================================================"
-sudo cp ~/RC/openhd /usr/local/bin/
+sudo cp /home/radxa/RC/openhd /usr/local/bin/
+sudo chmod +x /usr/local/bin/openhd
 
 
 echo "======================================================================"
@@ -48,18 +51,12 @@ echo "Installing mandatory dependencies for openhd "
 echo "======================================================================"
 
 BASE_PACKAGES="libpoco-dev clang-format libusb-1.0-0-dev libpcap-dev libsodium-dev libnl-3-dev libnl-genl-3-dev libnl-route-3-dev libsdl2-dev git ruby-dev"
+PLATFORM_PACKAGES="libpoco-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly libunwind-dev"
 
-PLATFORM_PACKAGES="libpoco-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly libcamera-openhd libunwind-dev "
-
-curl -1sLf 'https://dl.cloudsmith.io/public/openhd/release/setup.deb.sh'| sudo -E bash
-sudo apt update
-#apt upgrade -y -o Dpkg::Options::="--force-overwrite" --no-install-recommends --allow-downgrades
-sudo apt upgrade --no-install-recommends -y
 # Install platform-specific packages
 echo "Installing platform-specific packages..."
  for package in ${PLATFORM_PACKAGES} ${BASE_PACKAGES}; do
      echo "Installing ${package}..."
-     #apt install -y -o Dpkg::Options::="--force-overwrite" --no-install-recommends ${package}
      apt install -y --no-install-recommends ${package}
      if [ $? -ne 0 ]; then
          echo "Failed to install ${package}!"
